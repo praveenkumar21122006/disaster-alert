@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAHAT — Disaster Alert & Rescue Network</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- TOP EMERGENCY BAR -->
+<div class="emergency-bar">
+  <div class="emergency-bar-left">
+    <span class="pulse-dot"></span>
+    <span>EMERGENCY HELPLINE 24/7</span>
+    <a href="tel:112"><i class="fa-solid fa-phone"></i> 112</a>
+    <a href="tel:1078"><i class="fa-solid fa-life-ring"></i> 1078 — Disaster Management</a>
+  </div>
+  <div class="emergency-bar-right">
+    <span id="liveClock">--:--:-- IST</span>
+    <span class="location-badge"><i class="fa-solid fa-location-dot"></i> Pan-India Coverage</span>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="navbar">
+  <div class="nav-left">
+    <div class="logo">
+      <div class="logo-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div>
+        <h1>RAHAT</h1>
+        <p>Disaster Alert & Rescue</p>
+      </div>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#dashboard" class="active">Dashboard</a></li>
+      <li><a href="#map-section">Live Map</a></li>
+      <li><a href="#report">Report</a></li>
+      <li><a href="#shelters">Shelters</a></li>
+      <li><a href="#safety">Safety Guide</a></li>
+    </ul>
+  </div>
+  <div class="nav-right">
+    <button class="sos-btn" id="sosBtn"><i class="fa-solid fa-bell"></i> SOS EMERGENCY</button>
+    <button class="icon-btn" id="notifBtn"><i class="fa-solid fa-bell"></i><span class="badge">3</span></button>
+    <button class="login-btn">Volunteer Login</button>
+    <button class="hamburger" id="hamburger"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</nav>
+
+<!-- ALERT TICKER -->
+<div class="alert-ticker">
+  <div class="ticker-label"><i class="fa-solid fa-tower-broadcast"></i> LIVE ALERTS</div>
+  <div class="ticker-track" id="tickerTrack">
+    <span class="ticker-item critical"><i class="fa-solid fa-circle-exclamation"></i> CYCLONE WARNING: Odisha coast — wind 110 km/h expected in 6 hrs — Evacuate low-lying areas</span>
+    <span class="ticker-item warning"><i class="fa-solid fa-water"></i> FLOOD ALERT: Brahmaputra rising — Assam Dibrugarh — Level: DANGER</span>
+    <span class="ticker-item info"><i class="fa-solid fa-house-chimney-crack"></i> EARTHQUAKE M4.2 near Delhi NCR — No damage reported — Stay alert</span>
+    <span class="ticker-item warning"><i class="fa-solid fa-fire"></i> FOREST FIRE: Uttarakhand — 3 teams deployed</span>
+  </div>
+</div>
+
+<!-- HERO / DASHBOARD -->
+<section id="dashboard" class="hero">
+  <div class="hero-grid">
+    <div class="hero-left">
+      <div class="hero-badge"><span class="dot"></span> SYSTEM ACTIVE — Monitoring 28 States</div>
+      <h2>When Every <span class="accent">Second</span> Counts,<br>We Respond.</h2>
+      <p>Real-time disaster alerts, rescue coordination & verified shelter information. Built for citizens, volunteers & NDRF teams.</p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="document.getElementById('report').scrollIntoView({behavior:'smooth'})"><i class="fa-solid fa-hand-holding-hand"></i> Request Rescue</button>
+        <button class="btn-outline" onclick="document.getElementById('map-section').scrollIntoView({behavior:'smooth'})"><i class="fa-solid fa-map-location-dot"></i> View Live Map</button>
+      </div>
+      <div class="hero-stats">
+        <div><strong id="statRescued">12,847</strong><span>People Rescued</span></div>
+        <div><strong>342</strong><span>Active Volunteers</span></div>
+        <div><strong>18</strong><span>NDRF Teams Deployed</span></div>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="alert-card">
+        <div class="alert-card-header">
+          <h3><i class="fa-solid fa-radar"></i> Live Alerts</h3>
+          <span class="live-tag">LIVE</span>
+        </div>
+        <div id="alertList"></div>
+        <button class="link-btn" id="refreshAlerts"><i class="fa-solid fa-rotate"></i> Refresh feed</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS STRIP -->
+<section class="stats-strip">
+  <div class="stat"><i class="fa-solid fa-triangle-exclamation" style="color:#ef4444"></i><div><strong id="activeAlertsCount">7</strong><span>Active Alerts</span></div></div>
+  <div class="stat"><i class="fa-solid fa-people-group" style="color:#22c55e"></i><div><strong>1,429</strong><span>Evacuated Today</span></div></div>
+  <div class="stat"><i class="fa-solid fa-tent" style="color:#f59e0b"></i><div><strong>86</strong><span>Shelters Available</span></div></div>
+  <div class="stat"><i class="fa-solid fa-truck-medical" style="color:#3b82f6"></i><div><strong>214</strong><span>Medical Camps</span></div></div>
+  <div class="stat"><i class="fa-solid fa-helmet-safety" style="color:#a855f7"></i><div><strong>42</strong><span>Rescue Ops Ongoing</span></div></div>
+</section>
+
+<!-- MAP + REPORT GRID -->
+<section class="main-grid">
+  <div id="map-section" class="map-card">
+    <div class="card-header">
+      <h3><i class="fa-solid fa-map"></i> Disaster Map — Live Incidents & Relief Centers</h3>
+      <div class="map-filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="disaster"><span class="dot-red"></span> Disasters</button>
+        <button class="filter-btn" data-filter="shelter"><span class="dot-green"></span> Shelters</button>
+        <button class="filter-btn" data-filter="hospital"><span class="dot-blue"></span> Hospitals</button>
+      </div>
+    </div>
+    <div id="map"></div>
+    <div class="map-legend">
+      <span><i class="fa-solid fa-fire" style="color:#ef4444"></i> Fire</span>
+      <span><i class="fa-solid fa-water" style="color:#0ea5e9"></i> Flood</span>
+      <span><i class="fa-solid fa-house-crack" style="color:#f59e0b"></i> Earthquake</span>
+      <span><i class="fa-solid fa-wind" style="color:#8b5cf6"></i> Cyclone</span>
+      <span><i class="fa-solid fa-tent" style="color:#22c55e"></i> Shelter</span>
+      <span><i class="fa-solid fa-hospital" style="color:#3b82f6"></i> Hospital</span>
+    </div>
+  </div>
+
+  <div id="report" class="report-card">
+    <div class="report-header">
+      <h3><i class="fa-solid fa-circle-exclamation"></i> Report Emergency / Request Rescue</h3>
+      <p>Your report is sent instantly to nearest NDRF & volunteer teams.</p>
+    </div>
+    <form id="rescueForm">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Disaster Type</label>
+          <select id="disasterType" required>
+            <option value="">Select</option>
+            <option>Flood</option>
+            <option>Earthquake</option>
+            <option>Cyclone / Storm</option>
+            <option>Fire</option>
+            <option>Landslide</option>
+            <option>Building Collapse</option>
+            <option>Medical Emergency</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Severity</label>
+          <select id="severity" required>
+            <option value="">Select</option>
+            <option>Critical — Life Threatening</option>
+            <option>High — Urgent Help Needed</option>
+            <option>Moderate — Assistance Required</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Location / Landmark</label>
+        <div class="input-with-btn">
+          <input type="text" id="locationInput" placeholder="e.g., Near City Hospital, Patna — or use GPS" required>
+          <button type="button" class="gps-btn" id="gpsBtn"><i class="fa-solid fa-crosshairs"></i> GPS</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>People Affected</label>
+          <input type="number" id="peopleCount" min="1" value="1" required>
+        </div>
+        <div class="form-group">
+          <label>Contact Number</label>
+          <input type="tel" id="contactNum" placeholder="+91 9XXXXXXXXX" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="desc" rows="3" placeholder="Describe situation, access route, injuries, etc."></textarea>
+      </div>
+      <label class="check"><input type="checkbox" id="shareLocation"> Share my live location with rescue team</label>
+      <button type="submit" class="btn-primary full"><i class="fa-solid fa-paper-plane"></i> Send Rescue Request</button>
+      <p class="form-note"><i class="fa-solid fa-shield-halved"></i> Your data is encrypted & shared only with verified rescue authorities.</p>
+    </form>
+    <div id="reportSuccess" class="success-box hidden">
+      <i class="fa-solid fa-circle-check"></i>
+      <h4>Request Sent Successfully!</h4>
+      <p>Ticket <strong id="ticketId">#RH-0000</strong> — Nearest team is <strong>2.4 km</strong> away. ETA 12 mins.</p>
+      <button class="btn-outline small" onclick="document.getElementById('reportSuccess').classList.add('hidden')">Send Another</button>
+    </div>
+    <div class="recent-reports">
+      <h4>Recent Requests (You)</h4>
+      <ul id="myReports"></ul>
+    </div>
+  </div>
+</section>
+
+<!-- SHELTERS -->
+<section id="shelters" class="shelters-section">
+  <div class="section-head">
+    <h2><i class="fa-solid fa-tent"></i> Nearby Shelters & Relief Camps</h2>
+    <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="shelterSearch" placeholder="Search by city or district..."></div>
+  </div>
+  <div class="shelter-grid" id="shelterGrid"></div>
+</section>
+
+<!-- DISASTER TYPES -->
+<section class="disaster-grid-section">
+  <h2>Know Your Risk — Be Prepared</h2>
+  <div class="disaster-grid">
+    <div class="d-card"><div class="d-icon flood"><i class="fa-solid fa-water"></i></div><h4>Flood</h4><p>Move to higher ground. Avoid walking in flowing water.</p><a href="#">Safety tips →</a></div>
+    <div class="d-card"><div class="d-icon quake"><i class="fa-solid fa-house-crack"></i></div><h4>Earthquake</h4><p>Drop, Cover, Hold. Stay away from windows.</p><a href="#">Safety tips →</a></div>
+    <div class="d-card"><div class="d-icon cyclone"><i class="fa-solid fa-wind"></i></div><h4>Cyclone</h4><p>Stay indoors. Keep emergency kit ready.</p><a href="#">Safety tips →</a></div>
+    <div class="d-card"><div class="d-icon fire"><i class="fa-solid fa-fire"></i></div><h4>Fire</h4><p>Crawl low under smoke. Call 101 immediately.</p><a href="#">Safety tips →</a></div>
+    <div class="d-card"><div class="d-icon slide"><i class="fa-solid fa-mountain"></i></div><h4>Landslide</h4><p>Evacuate hillside areas during heavy rain.</p><a href="#">Safety tips →</a></div>
+    <div class="d-card"><div class="d-icon medical"><i class="fa-solid fa-briefcase-medical"></i></div><h4>Medical</h4><p>Keep first-aid kit. Call 102 / 108.</p><a href="#">Safety tips →</a></div>
+  </div>
+</section>
+
+<!-- SAFETY GUIDE + CONTACTS -->
+<section id="safety" class="info-grid">
+  <div class="info-card">
+    <h3><i class="fa-solid fa-kit-medical"></i> Emergency Kit Checklist</h3>
+    <ul class="checklist">
+      <li><i class="fa-solid fa-check"></i> Drinking water (3 days) & dry food</li>
+      <li><i class="fa-solid fa-check"></i> Torch, batteries, power bank</li>
+      <li><i class="fa-solid fa-check"></i> First-aid box & medicines</li>
+      <li><i class="fa-solid fa-check"></i> Important documents in waterproof bag</li>
+      <li><i class="fa-solid fa-check"></i> Whistle to signal for help</li>
+      <li><i class="fa-solid fa-check"></i> Cash & emergency contacts list</li>
+    </ul>
+  </div>
+  <div class="info-card">
+    <h3><i class="fa-solid fa-phone-volume"></i> Emergency Contacts</h3>
+    <div class="contact-grid">
+      <a href="tel:112" class="contact"><strong>112</strong><span>National Emergency</span></a>
+      <a href="tel:102" class="contact"><strong>102</strong><span>Ambulance</span></a>
+      <a href="tel:101" class="contact"><strong>101</strong><span>Fire</span></a>
+      <a href="tel:100" class="contact"><strong>100</strong><span>Police</span></a>
+      <a href="tel:1078" class="contact"><strong>1078</strong><span>NDMA Helpline</span></a>
+      <a href="tel:1098" class="contact"><strong>1098</strong><span>Child Helpline</span></a>
+    </div>
+    <div class="helpline-note"><i class="fa-solid fa-circle-info"></i> Save these numbers offline. Works even without internet via SMS.</div>
+  </div>
+  <div class="info-card">
+    <h3><i class="fa-solid fa-people-group"></i> Volunteer & NGO</h3>
+    <p>Join 10,000+ verified volunteers. Get notified when help is needed near you.</p>
+    <div class="vol-stats"><span><strong>342</strong> active</span><span><strong>1.2k</strong> on standby</span></div>
+    <button class="btn-primary full"><i class="fa-solid fa-handshake-angle"></i> Register as Volunteer</button>
+    <button class="btn-outline full" style="margin-top:8px"><i class="fa-solid fa-building-ngo"></i> NGO / Team Login</button>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="footer-grid">
+    <div>
+      <div class="logo" style="margin-bottom:12px"><div class="logo-icon"><i class="fa-solid fa-triangle-exclamation"></i></div><div><h1>RAHAT</h1><p>Disaster Alert & Rescue</p></div></div>
+      <p class="muted">A public-interest platform connecting citizens with NDRF, SDRF & verified volunteers. Not a government website — we relay to official agencies.</p>
+    </div>
+    <div><h4>Platform</h4><a href="#">How it works</a><a href="#">For Volunteers</a><a href="#">For NGOs</a><a href="#">API</a></div>
+    <div><h4>Resources</h4><a href="#">Safety Guides</a><a href="#">Evacuation Maps</a><a href="#">Weather</a><a href="#">NDMA Guidelines</a></div>
+    <div><h4>Legal</h4><a href="#">Privacy</a><a href="#">Terms</a><a href="#">Disclaimer</a><p class="muted small" style="margin-top:12px">© 2026 RAHAT Network. Built for good.</p></div>
+  </div>
+</footer>
+
+<!-- SOS MODAL -->
+<div id="sosModal" class="modal hidden">
+  <div class="modal-box sos-box">
+    <button class="close-modal" id="closeSos"><i class="fa-solid fa-xmark"></i></button>
+    <div class="sos-pulse"><i class="fa-solid fa-bell"></i></div>
+    <h2>Send SOS Emergency Alert?</h2>
+    <p>This will immediately share your location with the nearest rescue teams and emergency contacts.</p>
+    <div class="sos-actions">
+      <button class="btn-primary large" id="confirmSos"><i class="fa-solid fa-tower-broadcast"></i> YES, SEND SOS NOW</button>
+      <button class="btn-outline" id="cancelSos">Cancel</button>
+    </div>
+    <p class="muted small">By sending SOS you confirm you need immediate life-saving assistance.</p>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
